@@ -55,6 +55,7 @@ void GameUi::reset() {
     useOnPick_ = false;
     aim_ = lastHostile_ = 0;
     vendorMode_ = 0; vendorSel_ = -1; vendorPage_ = 0; vendorNpc_ = 0;
+    gossipPage_ = 0; gossipKey_ = 0;
     trainerSel_ = -1;
     questScroll_ = 0; rewardPick_ = -1; questKey_ = 0;
     logView_ = 0; logSel_ = 0; watch_.clear(); watchLoaded_ = false; watchReadyMs_ = 0; logIds_.clear();
@@ -812,6 +813,7 @@ GameUi::Output GameUi::updateInner(w3n::GameSession& g, const Input& in, bool wa
     // a new vendor / quest window starts at its top
     if (g.vendor.open && g.vendor.npc != vendorNpc_) { vendorNpc_ = g.vendor.npc; vendorMode_ = 0; vendorSel_ = -1; vendorPage_ = 0; dirty_ = true; }
     if (!g.vendor.open) vendorNpc_ = 0;
+    if (g.gossip.open && g.gossipMenus != gossipKey_) { gossipKey_ = g.gossipMenus; gossipPage_ = 0; dirty_ = true; }
     if (!g.trainer.open) trainerSel_ = -1;
     {
         uint32_t key = g.questDialog.open() ? ((uint32_t)g.questDialog.kind << 24) ^ g.questDialog.quest ^ (uint32_t)g.questDialog.npc : 0;
@@ -1183,10 +1185,12 @@ void GameUi::doAction(w3n::GameSession& g, const Input& in, Act act, int arg, Ou
             break;
         case Act::PagePrev:
             if (panel(g) == Panel::Vendor) vendorPage_ = std::max(0, vendorPage_ - 1);
+            else if (panel(g) == Panel::Gossip) gossipPage_ = std::max(0, gossipPage_ - 1);
             else page_ = std::max(0, page_ - 1);
             break;
         case Act::PageNext:
             if (panel(g) == Panel::Vendor) ++vendorPage_;
+            else if (panel(g) == Panel::Gossip) ++gossipPage_;
             else ++page_;
             break;
         case Act::BarCell: useSlot(g, in, arg, out); break;

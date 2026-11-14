@@ -341,6 +341,9 @@ private:
     // vendor (stage 5.13): mode 0 buy, 1 sell, 2 buyback; the selected row (absolute) and page
     int vendorMode_ = 0, vendorSel_ = -1, vendorPage_ = 0;
     uint64_t vendorNpc_ = 0;
+    // gossip: the page of a menu with more rows than fit above Goodbye; reset for every new menu (GameSession::gossipMenus)
+    int gossipPage_ = 0;
+    uint32_t gossipKey_ = 0;
     int trainerSel_ = -1;              // index into trainer.spells
     uint32_t infoEntry_ = 0;           // the item shown by Panel::ItemInfo (stage 5.15 tooltip)
     uint32_t infoSpell_ = 0;           // the spell / aura shown by Panel::SpellInfo
