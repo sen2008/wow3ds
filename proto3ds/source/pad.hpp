@@ -124,6 +124,7 @@ struct PadOut {
     bool lastHostile = false, assist = false, selfTarget = false, cycle = false, attack = false;
     int partyPick = -1;               // friendly mode: D-pad up/right/down/left = party member 0..3 (stage 5.17)
     int tabDelta = 0;                 // SELECT + D-pad left / right: the previous / next tab of the touch screen
+    bool autoRun = false;             // SELECT tapped (released without the D-pad): turn auto run on / off
 };
 
 class Pad {
@@ -131,7 +132,7 @@ public:
     // camYaw: the camera's yaw; inCombat switches New 3DS face movement to strafing.
     PadOut update(const PadInput& in, const PadConfig& cfg, bool inCombat, float camYaw, float dt);
     int toggledSet() const { return toggled_; }
-    void reset() { toggled_ = 0; lastMode_ = PadOut::None; selectCombo_ = false; }
+    void reset() { toggled_ = 0; lastMode_ = PadOut::None; selectCombo_ = false; selectDown_ = false; }
 
 private:
     PadOut new3ds(const PadInput& in, const PadConfig& cfg, bool inCombat, float camYaw, float dt);
@@ -141,6 +142,7 @@ private:
     bool yLook_ = false;              // Old 3DS, D-pad = spells: the look button moved the camera, so its tap is not chat
     bool yDown_ = false;              // Old 3DS: Y was held last frame (a real tap, not a stale key-up after a pause)
     bool selectCombo_ = false;        // SELECT was used with the D-pad while held (no free camera on release)
+    bool selectDown_ = false;         // SELECT went down while we were reading (a real tap, not a stale key-up)
     void selectKeys(const PadInput& in, PadOut& o);
     PadOut::Mode lastMode_ = PadOut::None;
 };
