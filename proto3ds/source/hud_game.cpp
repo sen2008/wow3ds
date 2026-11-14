@@ -1062,6 +1062,11 @@ void hudBuildGame(HudList& l, const HudInput& in) {
             const int w = HudList::width(t);
             l.rect(kHudW / 2 - w / 2 - 3, 194, w + 6, HudList::lineHeight() + 1, hudRgba(0, 0, 0, 110));
             l.textCentered(kHudW / 2, 194, t, hudRgba(255, 230, 120));
+        } else if (g.autoRun) {
+            const std::string t = ui::tr("Auto run (SELECT: stop)", "Автобег (SELECT: стоп)");
+            const int w = HudList::width(t);
+            l.rect(kHudW / 2 - w / 2 - 3, 194, w + 6, HudList::lineHeight() + 1, hudRgba(0, 0, 0, 110));
+            l.textCentered(kHudW / 2, 194, t, hudRgba(255, 230, 120));
         }
     }
     // ---- UI stage 10: aiming a ground spell - its name and the buttons (the ring itself is drawn in the world)
