@@ -182,27 +182,44 @@ void GameUi::drawGossip(w3n::GameSession& g) {
         for (size_t i = 0; i < lines.size() && i < 4; ++i) { list_.text(12, y, lines[i], kText); y += 12; }
         y += 4;
     }
-    for (size_t i = 0; i < m.options.size() && y + 22 <= kTabY - 30; ++i) {
-        const w3n::GossipOption& o = m.options[i];
+    // Options and quests share one list. Rows that do not fit above Goodbye go to further pages: a server menu with more
+    // than three rows under a four-line text (custom servers' multi-step menus: "Review this hire" puts Confirm last) lost
+    // its last rows, with no way to reach them.
+    const int rowH = 24, by = kTabY - 28;
+    const int rows = std::max(1, (by - y) / rowH);
+    const int count = (int)(m.options.size() + m.quests.size());
+    const int pages = std::max(1, (count + rows - 1) / rows);
+    gossipPage_ = std::min(std::max(gossipPage_, 0), pages - 1);
+    for (int r = 0; r < rows; ++r) {
+        const size_t idx = (size_t)(gossipPage_ * rows + r);
+        if (idx >= (size_t)count) break;
         list_.rect(10, y, kTouchW - 20, 22, kRow);
-        ui::Image ic = assets().sprite(("gossip_" + std::to_string(std::min<int>(o.icon, 9))).c_str());
-        if (ic.ok()) list_.image(13, y + 3, 16, 16, ic);
-        else list_.text(15, y + 5, "◆", kGold);
-        list_.textFit(34, y + 3, o.text, kTouchW - 50, kText, true, Font::Normal);
-        region(10, y, kTouchW - 20, 22, Act::GossipOption, (int)i);
-        y += 24;
+        if (idx < m.options.size()) {
+            const w3n::GossipOption& o = m.options[idx];
+            ui::Image ic = assets().sprite(("gossip_" + std::to_string(std::min<int>(o.icon, 9))).c_str());
+            if (ic.ok()) list_.image(13, y + 3, 16, 16, ic);
+            else list_.text(15, y + 5, "◆", kGold);
+            list_.textFit(34, y + 3, o.text, kTouchW - 50, kText, true, Font::Normal);
+            region(10, y, kTouchW - 20, 22, Act::GossipOption, (int)idx);
+        } else {
+            const size_t qi = idx - m.options.size();
+            const w3n::GossipQuest& q = m.quests[qi];
+            const bool grey = w3n::questMarkGrey(q.icon);
+            const char* mark = w3n::questMarkGlyph(q.icon);
+            ui::Image ic = assets().sprite(mark[0] == '?' ? "quest_done" : "quest_new");
+            if (ic.ok() && !grey) list_.image(13, y + 3, 16, 16, ic);
+            else list_.text(16, y + 2, mark[0] ? mark : "!", grey ? kGrey : kGold, true, Font::Normal);
+            list_.textFit(34, y + 3, q.title + " [" + std::to_string(q.level) + "]", kTouchW - 50, grey ? kGrey : kYellow, true, Font::Normal);
+            region(10, y, kTouchW - 20, 22, Act::GossipQuest, (int)qi);
+        }
+        y += rowH;
     }
-    for (size_t i = 0; i < m.quests.size() && y + 22 <= kTabY - 30; ++i) {
-        const w3n::GossipQuest& q = m.quests[i];
-        list_.rect(10, y, kTouchW - 20, 22, kRow);
-        const bool grey = w3n::questMarkGrey(q.icon);
-        const char* mark = w3n::questMarkGlyph(q.icon);
-        ui::Image ic = assets().sprite(mark[0] == '?' ? "quest_done" : "quest_new");
-        if (ic.ok() && !grey) list_.image(13, y + 3, 16, 16, ic);
-        else list_.text(16, y + 2, mark[0] ? mark : "!", grey ? kGrey : kGold, true, Font::Normal);
-        list_.textFit(34, y + 3, q.title + " [" + std::to_string(q.level) + "]", kTouchW - 50, grey ? kGrey : kYellow, true, Font::Normal);
-        region(10, y, kTouchW - 20, 22, Act::GossipQuest, (int)i);
-        y += 24;
+    if (pages > 1) {   // left of Goodbye (pager() sits bottom right, under it)
+        char b[32];
+        snprintf(b, sizeof b, "%d/%d", gossipPage_ + 1, pages);
+        btn(10, by, 28, 24, "◀", Act::PagePrev, 0, gossipPage_ > 0 ? Style::Normal : Style::Disabled);
+        list_.textCentered(58, by + 6, b, kGrey);
+        btn(78, by, 28, 24, "▶", Act::PageNext, 0, gossipPage_ + 1 < pages ? Style::Normal : Style::Disabled);
     }
     btn(kTouchW - 110, kTabY - 28, 100, 24, tr("Goodbye", "До свидания"), Act::GossipClose, 0, Style::Normal, Font::Small);
 }
