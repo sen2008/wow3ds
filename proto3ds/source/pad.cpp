@@ -105,13 +105,18 @@ bool PadConfig::save(const char* path) const {
 // SELECT (both schemes, UI stage 3): held + D-pad left/right turns the touch screen's tabs; a tap without the D-pad
 // is the free camera, on release.
 void Pad::selectKeys(const PadInput& in, PadOut& o) {
-    if (in.down & KEY_SELECT) selectCombo_ = false;
+    if (in.down & KEY_SELECT) { selectCombo_ = false; selectDown_ = true; }
     if (in.held & KEY_SELECT) {
         if (in.down & KEY_DLEFT) { o.tabDelta = -1; selectCombo_ = true; }
         if (in.down & KEY_DRIGHT) { o.tabDelta = 1; selectCombo_ = true; }
     }
     // Stage 5.31: a tap no longer switches to the free camera (it went on by accident, the user asked for it gone).
     o.freeCamera = false;
+    // A tap (released without the D-pad) turns auto run on / off.
+    if (in.up & KEY_SELECT) {
+        if (selectDown_ && !selectCombo_) o.autoRun = true;
+        selectDown_ = false;
+    }
 }
 
 PadOut Pad::update(const PadInput& in, const PadConfig& cfg, bool inCombat, float camYaw, float dt) {
@@ -125,6 +130,7 @@ PadOut Pad::update(const PadInput& in, const PadConfig& cfg, bool inCombat, floa
     PadOut o = cfg.scheme == PadScheme::Old3DS ? old3ds(i, cfg, dt) : new3ds(i, cfg, inCombat, camYaw, dt);
     o.tabDelta = tabs.tabDelta;
     o.freeCamera = tabs.freeCamera;
+    o.autoRun = tabs.autoRun;
     return o;
 }
 

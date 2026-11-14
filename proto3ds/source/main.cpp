@@ -1332,7 +1332,11 @@ int main() {
             if (uiOut.characters) {   // START menu: log out; the timer runs, the character list comes when it ends
                 if (g_login.requestCharacterList()) gs.addSystem(ui::tr("Logging out... move to cancel.", "Выход... двиньтесь, чтобы отменить."), g_login.sessionMs());
             }
-            if (g_login.logoutPending() && (po.dir || po.jump)) {   // as the original: moving cancels the logout
+            if (po.autoRun) {   // SELECT tap: auto run on / off (it replaces Follow)
+                gs.autoRun = !gs.autoRun && gs.life() != w3n::Life::Dead;   // (a ghost runs back to its body)
+                if (gs.autoRun && gs.following) gs.stopFollow(g_login.sessionMs());
+            }
+            if (g_login.logoutPending() && (po.dir || po.jump || gs.autoRun)) {   // as the original: moving cancels the logout
                 g_login.cancelLogout();
                 gs.addSystem(ui::tr("Logout cancelled.", "Выход отменён."), g_login.sessionMs());
             }
@@ -1518,6 +1522,7 @@ int main() {
             dead(cp, 18);
             dead(cs, 24);
             const bool onlineWalk = online && walk;
+            if (game && !onlineWalk) game->autoRun = false;
             if (onlineWalk) {   // camera and facing from the controller scheme
                 if (!uiOut.placing) {   // (UI stage 10: while a ground spell is aimed the C-Stick moves its ring)
                     cam.yaw += po.camYaw;
@@ -1525,6 +1530,11 @@ int main() {
                 }
                 if (po.zoom) camDist = std::clamp(camDist + po.zoom * 8.0f * dt, 0.0f, 15.0f);
                 if (po.centerCamera) { cam.yaw = charYaw; cam.pitch = -0.1f; }
+                // Auto run: the Circle Pad, a blocked move (windows, loading), death or Follow ends it; else the
+                // character turns to the camera, so the C-Stick steers (Old 3DS: the camera is the character already)
+                if (game->autoRun && (po.dir || uiOut.blockMove || loadingWorld || game->following || game->life() == w3n::Life::Dead))
+                    game->autoRun = false;
+                if (game->autoRun && !po.faceYaw) { po.faceYaw = true; po.yaw = cam.yaw; }
                 if (padCfg.scheme == PadScheme::Old3DS) {
                     charYaw = cam.yaw;                       // the camera is the character
                 } else if (po.faceYaw && !uiOut.blockMove) {   // turn towards the stick / camera, quickly but not in one frame
@@ -1577,7 +1587,7 @@ int main() {
             // not while a map is loading, not on a taxi (the server ignores those anyway), not under the transfer screen.
             if (game && onlineWalk && !serverMoveNow && !loadingWorld && portal.phase() == PortalFx::Phase::Idle) game->checkAreaTriggers(pl, netMs);
             if (serverMoveNow) {
-                if (!wasServerMoveSent) { game->mover.stopAll(netMs); wasServerMoveSent = true; game->stopFollow(netMs, false); }
+                if (!wasServerMoveSent) { game->mover.stopAll(netMs); wasServerMoveSent = true; game->stopFollow(netMs, false); game->autoRun = false; }
                 pl[0] = fpos[0]; pl[1] = fpos[1]; pl[2] = fpos[2];
                 charYaw = fyaw;
                 airborne = jumped = false;
@@ -1675,6 +1685,7 @@ int main() {
                     }
                     return ok;
                 };
+                if (game->autoRun && !po.dir) { po.dir = w3n::MoveFlag::Forward; po.walk = false; }   // (stopped above)
                 // UI stage 9: following another unit (the target menu's Follow): the client runs after it; any move,
                 // jump or turn of our own, death, a taxi or a loading screen ends it (like the original's auto-follow)
                 if (game->following) {

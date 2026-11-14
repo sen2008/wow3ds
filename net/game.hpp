@@ -675,6 +675,7 @@ public:
     // Following (the original's /follow): the client runs after a unit; any move of our own stops it.
     uint64_t following = 0;
     std::string followingName;
+    bool autoRun = false;   // auto run (SELECT tap): the client holds Forward and runs where the camera looks (main.cpp)
     static constexpr float kFollowStartRange = 28.0f, kFollowLoseRange = 40.0f;
     bool startFollow(uint64_t guid, const float pos[3], uint32_t nowMs);   // false + a line: too far / nobody
     void stopFollow(uint32_t nowMs, bool tell = true);
