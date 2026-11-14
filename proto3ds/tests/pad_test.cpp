@@ -83,6 +83,23 @@ int main() {
     CHECK(o.tabDelta == 1 && o.slot < 0, "SELECT + D-right: next tab");
     CHECK(press(p, f, KEY_SELECT, KEY_DLEFT).tabDelta == -1, "SELECT + D-left: previous tab");
     CHECK(!press(p, f, 0, 0, 0, 0, 0, 0, false, 0, KEY_SELECT).freeCamera, "...and no free camera after the combo");
+    // auto run: a SELECT tap (down, then up) asks for it; a key-up without its key-down or after SELECT + D-pad does not
+    CHECK(!press(p, f, 0, KEY_SELECT).autoRun, "SELECT down: no auto run yet");
+    CHECK(press(p, f, 0, 0, 0, 0, 0, 0, false, 0, KEY_SELECT).autoRun, "SELECT tap: auto run");
+    CHECK(!press(p, f, 0, 0, 0, 0, 0, 0, false, 0, KEY_SELECT).autoRun, "a stale SELECT key-up: no auto run");
+    press(p, f, 0, KEY_SELECT);
+    CHECK(!press(p, f, KEY_SELECT, 0).autoRun, "SELECT held: no auto run");
+    CHECK(press(p, f, KEY_SELECT, KEY_DLEFT).tabDelta == -1, "held SELECT + D-left still turns the tab");
+    CHECK(!press(p, f, 0, 0, 0, 0, 0, 0, false, 0, KEY_SELECT).autoRun, "SELECT + D-pad: no auto run on release");
+    {
+        Pad pa;
+        PadConfig old;
+        old.scheme = PadScheme::Old3DS;
+        pa.update(PadInput{KEY_SELECT, KEY_SELECT, 0, 0, 0, 0, 0}, old, false, 0, 1.0f / 30);
+        CHECK(pa.update(PadInput{0, 0, KEY_SELECT, 0, 0, 0, 0}, old, false, 0, 1.0f / 30).autoRun, "Old 3DS: SELECT tap: auto run");
+        pa.update(PadInput{KEY_SELECT, KEY_SELECT, 0, 0, 0.9f, 0, 0}, old, false, 0, 1.0f / 30);
+        CHECK(pa.update(PadInput{0, 0, KEY_SELECT, 0, 0.9f, 0, 0}, old, false, 0, 1.0f / 30).autoRun, "a tap while steering still counts");
+    }
     {
         PadConfig cl;
         cl.scheme = PadScheme::Old3DS;

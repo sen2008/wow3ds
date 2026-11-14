@@ -1587,7 +1587,7 @@ int main() {
             // not while a map is loading, not on a taxi (the server ignores those anyway), not under the transfer screen.
             if (game && onlineWalk && !serverMoveNow && !loadingWorld && portal.phase() == PortalFx::Phase::Idle) game->checkAreaTriggers(pl, netMs);
             if (serverMoveNow) {
-                if (!wasServerMoveSent) { game->mover.stopAll(netMs); wasServerMoveSent = true; game->stopFollow(netMs, false); }
+                if (!wasServerMoveSent) { game->mover.stopAll(netMs); wasServerMoveSent = true; game->stopFollow(netMs, false); game->autoRun = false; }
                 pl[0] = fpos[0]; pl[1] = fpos[1]; pl[2] = fpos[2];
                 charYaw = fyaw;
                 airborne = jumped = false;

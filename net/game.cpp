@@ -60,6 +60,7 @@ void GameSession::attach(WorldClient& wc, uint32_t nowMs) {
     petMoodSeen_ = 0;
     petMoodWarnMs_ = 0;
     gossip = GossipMenu();
+    autoRun = false;   // a new world entry (another character, a relog) starts standing
     corpse = CorpseInfo();
     resurrectOffer = ResurrectOffer();
     spiritHealerConfirm = 0;
